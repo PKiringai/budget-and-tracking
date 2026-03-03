@@ -5,41 +5,42 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
-    datasource:
-      url: ${DB_URL:jdbc:postgresql://172.16.19.33:5999/yfsdb}
-      username: yfs_service
-      password: 'G7!kL9#pQ2@vX5$mR8^tZ1'
-      driver-class-name: org.postgresql.Driver
-      hikari:
-        maximum-pool-size: ${DB_POOL_SIZE:20}
-        minimum-idle: 5
-        connection-timeout: 30000
-        idle-timeout: 600000
-        max-lifetime: 1800000
-        connection-test-query: SELECT 1
-        pool-name: BudgetTrackerHikariCP
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://172.16.19.33:5999/yfsdb}
+    username: yfs_service
+    password: 'G7!kL9#pQ2@vX5$mR8^tZ1'
+    driver-class-name: org.postgresql.Driver
 
-    jpa:
-      open-in-view: false
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      pool-name: BudgetTrackerHikariCP
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update  # NEVER use update/create in production
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+    properties:
       hibernate:
-        ddl-auto: update  # NEVER use update/create in production
-        naming:
-          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-          implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-      properties:
-        hibernate:
-          jdbc:
-            batch_size: 20
-            fetch_size: 50
-          order_inserts: true
-          order_updates: true
-          format_sql: false
-          use_sql_comments: false
-          dialect: org.hibernate.dialect.PostgreSQLDialect
-          default_schema: public
-          temp:
-            use_jdbc_metadata_defaults: false
-      show-sql: false
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+        order_inserts: true
+        order_updates: true
+        format_sql: false
+        use_sql_comments: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+        temp:
+          use_jdbc_metadata_defaults: false
+    show-sql: false
 
   flyway:
       enabled: true

@@ -43,6 +43,9 @@ public class Budget {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "budget_code", nullable = false, length = 100, unique = true)
+    private String budgetCode;
+
     @Column(name = "cif_id", nullable = false, length = 100)
     @NotBlank(message = "Customer ID is required")
     private String cifId;

@@ -1,6 +1,7 @@
 package coop.bank.budget_tracking.exceptions;
 
-
+import coop.bank.budget_tracking.dto.response.ApiResponse;
+import coop.bank.budget_tracking.dto.response.ApiResponse.ValidationError;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -8,141 +9,116 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Global Exception Handler
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private String extractPath(WebRequest request) {
-        return request.getDescription(false).replace("uri=", "");
-    }
-
     @ExceptionHandler(BudgetNotFoundException.class)
-    public ResponseEntity<APIError> handleBudgetNotFound(
-            BudgetNotFoundException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleBudgetNotFound(
+            BudgetNotFoundException ex) {
 
         log.error("Budget not found: {}", ex.getMessage());
 
-        APIError error = new APIError();
-        error.setSuccess(false);
-        error.setMessage(ex.getMessage());
-        error.setTimestamp(OffsetDateTime.now());
-        error.setPath(extractPath(request));
-        error.setStatus(HttpStatus.NOT_FOUND.value());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    @ExceptionHandler(InvalidBudgetException.class)
-    public ResponseEntity<APIError> handleInvalidBudget(
-            InvalidBudgetException ex, WebRequest request) {
-
-        log.error("Invalid budget: {}", ex.getMessage());
-
-        APIError error = new APIError();
-        error.setSuccess(false);
-        error.setMessage(ex.getMessage());
-        error.setTimestamp(OffsetDateTime.now());
-        error.setPath(extractPath(request));
-        error.setStatus(HttpStatus.BAD_REQUEST.value());
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(
+                        "E_404",
+                        "NOT_FOUND",
+                        ex.getMessage()
+                ));
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
-    public ResponseEntity<APIError> handleTransactionNotFound(
-            TransactionNotFoundException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleTransactionNotFound(
+            TransactionNotFoundException ex) {
 
         log.error("Transaction not found: {}", ex.getMessage());
 
-        APIError error = new APIError();
-        error.setSuccess(false);
-        error.setMessage(ex.getMessage());
-        error.setTimestamp(OffsetDateTime.now());
-        error.setPath(extractPath(request));
-        error.setStatus(HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(
+                        "E_404",
+                        "NOT_FOUND",
+                        ex.getMessage()
+                ));
+    }
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    @ExceptionHandler(InvalidBudgetException.class)
+    public ResponseEntity<ApiResponse<Object>> handleInvalidBudget(
+            InvalidBudgetException ex) {
+
+        log.error("Invalid budget: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(
+                        "E_400",
+                        "INVALID_REQUEST",
+                        ex.getMessage()
+                ));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<APIError> handleValidationErrors(
-            MethodArgumentNotValidException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
 
         log.error("Validation failed: {}", ex.getMessage());
 
-        List<APIError.ValidationError> validationErrors = ex.getBindingResult()
+        List<ValidationError> validationErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(fieldError -> {
-                    APIError.ValidationError validationError = new APIError.ValidationError();
-                    validationError.setField(fieldError.getField());
-                    validationError.setMessage(fieldError.getDefaultMessage());
-                    validationError.setRejectedValue(fieldError.getRejectedValue());
-                    return validationError;
-                })
+                .map(fieldError -> ValidationError.builder()
+                        .field(fieldError.getField())
+                        .message(fieldError.getDefaultMessage())
+                        .rejectedValue(fieldError.getRejectedValue())
+                        .build())
                 .collect(Collectors.toList());
 
-        APIError error = new APIError();
-        error.setSuccess(false);
-        error.setMessage("Validation failed");
-        error.setTimestamp(OffsetDateTime.now());
-        error.setPath(extractPath(request));
-        error.setStatus(HttpStatus.BAD_REQUEST.value());
-        error.setErrors(validationErrors);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(
+                        "E_400",
+                        "VALIDATION_ERROR",
+                        "Validation failed",
+                        validationErrors
+                ));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<APIError> handleConstraintViolation(
-            ConstraintViolationException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleConstraintViolation(
+            ConstraintViolationException ex) {
 
         log.error("Constraint violation: {}", ex.getMessage());
 
-        List<APIError.ValidationError> validationErrors = ex.getConstraintViolations()
+        List<ValidationError> validationErrors = ex.getConstraintViolations()
                 .stream()
-                .map(violation -> {
-                    APIError.ValidationError validationError = new APIError.ValidationError();
-                    validationError.setField(violation.getPropertyPath().toString());
-                    validationError.setMessage(violation.getMessage());
-                    validationError.setRejectedValue(violation.getInvalidValue());
-                    return validationError;
-                })
+                .map(violation -> ValidationError.builder()
+                        .field(violation.getPropertyPath().toString())
+                        .message(violation.getMessage())
+                        .rejectedValue(violation.getInvalidValue())
+                        .build())
                 .collect(Collectors.toList());
 
-        APIError error = new APIError();
-        error.setSuccess(false);
-        error.setMessage("Validation failed");
-        error.setTimestamp(OffsetDateTime.now());
-        error.setPath(extractPath(request));
-        error.setStatus(HttpStatus.BAD_REQUEST.value());
-        error.setErrors(validationErrors);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(
+                        "E_400",
+                        "VALIDATION_ERROR",
+                        "Validation failed",
+                        validationErrors
+                ));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<APIError> handleGenericException(
-            Exception ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleGenericException(
+            Exception ex) {
 
-        log.error("Unexpected error: ", ex);
+        log.error("Unexpected error", ex);
 
-        APIError error = new APIError();
-        error.setSuccess(false);
-        error.setMessage("An unexpected error occurred. Please try again later.");
-        error.setTimestamp(OffsetDateTime.now());
-        error.setPath(extractPath(request));
-        error.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error(
+                        "E_500",
+                        "INTERNAL_ERROR",
+                        "An unexpected error occurred. Please try again later."
+                ));
     }
 }

@@ -2,7 +2,9 @@ package coop.bank.budget_tracking.service;
 
 
 import coop.bank.budget_tracking.dto.response.CategoryDTO;
+import coop.bank.budget_tracking.enums.Status;
 import coop.bank.budget_tracking.repository.BudgetRepository;
+import coop.bank.budget_tracking.repository.CategoryRepository;
 import coop.bank.budget_tracking.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,51 +28,65 @@ public class CategoryService {
 
     private final TransactionRepository transactionRepository;
     private final BudgetRepository budgetRepository;
+    private final CategoryRepository categoryRepository;
 
     /**
      * Get all distinct categories from all transactions
      */
-    public List<String> getAllCategories() {
-        log.info("Fetching all distinct categories from transactions");
-        return transactionRepository.findAllDistinctCategories();
+    public List<CategoryDTO> getAllCategories() {
+        log.info("Mapping active categories to DTO for frontend display");
+
+        return categoryRepository.findAllByStatusOrderByNameDesc(Status.ACTIVE)
+                .stream()
+                .map(category -> new CategoryDTO(
+                        category.getId(),
+                        category.getCode(),
+                        category.getName(),
+                        category.getStatus()
+                ))
+                .collect(Collectors.toList());
     }
+//    public List<String> getAllCategories() {
+////        log.info("Fetching all distinct categories from transactions");
+////        return transactionRepository.findAllDistinctCategories();
+//    }
 
     /**
      * Get categories for a specific customer with statistics
      */
-    public List<CategoryDTO> getCustomerCategories(String cifId) {
-        log.info("Fetching category statistics for customer: {}", cifId);
-
-        // Get spending by category from transactions
-        List<Object[]> categorySpending = transactionRepository
-                .getCategoryWiseSpending(
-                        cifId,
-                        java.time.OffsetDateTime.now().minusMonths(12),
-                        java.time.OffsetDateTime.now()
-                );
-
-        // Get active budget categories
-        Set<String> budgetCategories = budgetRepository
-                .findActiveBudgetsByCifId(cifId)
-                .stream()
-                .map(budget -> budget.getCategory())
-                .collect(Collectors.toSet());
-
-        // Build CategoryDTO list
-        return categorySpending.stream()
-                .map(row -> {
-                    String categoryName = (String) row[0];
-                    BigDecimal totalSpending = (BigDecimal) row[1];
-
-                    return CategoryDTO.builder()
-                            .categoryName(categoryName)
-                            .transactionCount(null) // Can add if needed
-                            .totalSpending(totalSpending)
-                            .hasBudget(budgetCategories.contains(categoryName))
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
+//    public List<CategoryDTO> getCustomerCategories(String cifId) {
+//        log.info("Fetching category statistics for customer: {}", cifId);
+//
+//        // Get spending by category from transactions
+//        List<Object[]> categorySpending = transactionRepository
+//                .getCategoryWiseSpending(
+//                        cifId,
+//                        java.time.OffsetDateTime.now().minusMonths(12),
+//                        java.time.OffsetDateTime.now()
+//                );
+//
+//        // Get active budget categories
+//        Set<String> budgetCategories = budgetRepository
+//                .findActiveBudgetsByCifId(cifId)
+//                .stream()
+//                .map(budget -> budget.getCategory())
+//                .collect(Collectors.toSet());
+//
+//        // Build CategoryDTO list
+//        return categorySpending.stream()
+//                .map(row -> {
+//                    String categoryName = (String) row[0];
+//                    BigDecimal totalSpending = (BigDecimal) row[1];
+//
+//                    return CategoryDTO.builder()
+//                            .categoryName(categoryName)
+//                            .transactionCount(null) // Can add if needed
+//                            .totalSpending(totalSpending)
+//                            .hasBudget(budgetCategories.contains(categoryName))
+//                            .build();
+//                })
+//                .collect(Collectors.toList());
+//    }
 
     /**
      * Get available categories for budgeting (categories with transactions)
@@ -83,9 +99,9 @@ public class CategoryService {
     /**
      * Get category statistics for a customer
      */
-    public List<CategoryDTO> getCategoryStatistics(String cifId) {
-        log.info("Fetching detailed category statistics for customer: {}", cifId);
-
-        return getCustomerCategories(cifId);
-    }
+//    public List<CategoryDTO> getCategoryStatistics(String cifId) {
+//        log.info("Fetching detailed category statistics for customer: {}", cifId);
+//
+//        return getCustomerCategories(cifId);
+//    }
 }

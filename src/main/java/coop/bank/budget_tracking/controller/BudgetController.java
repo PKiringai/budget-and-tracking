@@ -6,6 +6,7 @@ import coop.bank.budget_tracking.dto.request.BudgetUpdateRequest;
 import coop.bank.budget_tracking.dto.response.ApiResponse;
 import coop.bank.budget_tracking.dto.response.BudgetResponse;
 import coop.bank.budget_tracking.dto.response.BudgetSummaryResponse;
+import coop.bank.budget_tracking.dto.response.CustomerBudgetResponse;
 import coop.bank.budget_tracking.service.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -46,17 +47,38 @@ public class BudgetController {
     @PostMapping
     @Operation(summary = "Create Budget",
             description = "Create a new budget for a customer category")
-    public ResponseEntity<ApiResponse<BudgetResponse>> createBudget(
+    public ResponseEntity<CustomerBudgetResponse> createBudget(
             @Valid @RequestBody BudgetCreateRequest request) {
 
         log.info("POST /api/v1/budgets - Creating budget for CIF: {}, Category: {}",
                 request.getCifId(), request.getCategory());
 
-        BudgetResponse response = budgetService.createBudget(request);
+//        BudgetResponse response = budgetService.createBudget(request);
+        BudgetResponse budget = budgetService.createBudget(request);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Budget created successfully", response));
+        CustomerBudgetResponse response = CustomerBudgetResponse.builder()
+                .statusCode("0")
+                .statusDescription("SUCCESS")
+                .messageCode("0")
+                .messageDescription("Goal created successfully.")
+                .messageId(java.util.UUID.randomUUID().toString())
+                .accountNumber("01100611339002") // map properly later from budget
+                .accountName("ELLIANNE SULAA") // map properly later
+                .phoneNumber("254123456789")   // map properly later
+                .savingsPeriod(budget.getPeriodType()) // or budget.getSavingsPeriod() if exists
+                .maturityDate(budget.getEndDate().toString())
+                .startDate(budget.getStartDate().toString())
+                .endDate(budget.getEndDate().toString())
+                .frequency(budget.getPeriodType()) // or set a constant "MONTHLY" for now
+                .reminder("MONDAY") // default for now
+                .transactionId(java.util.UUID.randomUUID().toString())
+                .build();
+
+        return ResponseEntity.ok(response);
+
+//        return ResponseEntity
+//                .status(HttpStatus.CREATED)
+//                .body(ApiResponse.success("Budget created successfully", response));
     }
 
     /**

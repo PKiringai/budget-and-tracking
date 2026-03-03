@@ -1,6 +1,7 @@
 package coop.bank.budget_tracking.dto.response;
 
 
+import coop.bank.budget_tracking.enums.Status;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,8 +18,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class CategoryDTO {
 
+    private Long id;
+    private String categoryCode;
     private String categoryName;
-    private Long transactionCount;
-    private BigDecimal totalSpending;
-    private Boolean hasBudget;
+    private Status status;
 }

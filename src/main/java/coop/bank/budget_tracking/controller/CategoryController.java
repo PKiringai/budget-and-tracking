@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Category Controller - REST API for categories
@@ -38,30 +39,40 @@ public class CategoryController {
     @GetMapping
     @Operation(summary = "Get All Categories",
             description = "Retrieve all distinct categories from transaction data")
-    public ResponseEntity<ApiResponse<List<String>>> getAllCategories() {
+    public ResponseEntity<ApiResponse<List<CategoryDTO>>> getAllCategories() {
+
         log.info("GET /api/v1/categories");
 
-        List<String> categories = categoryService.getAllCategories();
+        List<CategoryDTO> categories = categoryService.getAllCategories();
 
         return ResponseEntity.ok(ApiResponse.success(categories));
     }
+
+
+//    public ResponseEntity<ApiResponse<List<String>>> getAllCategories() {
+//        log.info("GET /api/v1/categories");
+//
+//        List<String> categories = categoryService.getAllCategories();
+//
+//        return ResponseEntity.ok(ApiResponse.success(categories));
+//    }
 
     /**
      * GET /api/v1/categories/customer/{cifId}
      * Get categories for specific customer with statistics
      */
-    @GetMapping("/customer/{cifId}")
-    @Operation(summary = "Get Customer Categories",
-            description = "Retrieve categories for a customer with spending statistics")
-    public ResponseEntity<ApiResponse<List<CategoryDTO>>> getCustomerCategories(
-            @PathVariable @NotBlank String cifId) {
-
-        log.info("GET /api/v1/categories/customer/{}", cifId);
-
-        List<CategoryDTO> categories = categoryService.getCustomerCategories(cifId);
-
-        return ResponseEntity.ok(ApiResponse.success(categories));
-    }
+//    @GetMapping("/customer/{cifId}")
+//    @Operation(summary = "Get Customer Categories",
+//            description = "Retrieve categories for a customer with spending statistics")
+//    public ResponseEntity<ApiResponse<List<CategoryDTO>>> getCustomerCategories(
+//            @PathVariable @NotBlank String cifId) {
+//
+//        log.info("GET /api/v1/categories/customer/{}", cifId);
+//
+//        List<CategoryDTO> categories = categoryService.getCustomerCategories(cifId);
+//
+//        return ResponseEntity.ok(ApiResponse.success(categories));
+//    }
 
     /**
      * GET /api/v1/categories/customer/{cifId}/available
