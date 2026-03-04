@@ -1,6 +1,6 @@
 package coop.bank.budget_tracking.enums;
 
-public enum PeriodType {
+public enum PeriodUnit {
     DAILY("Daily"),
     WEEKLY("Weekly"),
     MONTHLY("Monthly"),
@@ -10,7 +10,7 @@ public enum PeriodType {
 
     private final String displayName;
 
-    PeriodType(String displayName) {
+    PeriodUnit(String displayName) {
         this.displayName = displayName;
     }
 
@@ -18,5 +18,3 @@ public enum PeriodType {
         return displayName;
     }
 }
-
-// to be removed

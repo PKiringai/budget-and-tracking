@@ -1,12 +1,17 @@
 package coop.bank.budget_tracking.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,10 +29,21 @@ public class ApiResponse<T> {
     private String messageDescription;
     private String messageId;
 
-    private T data;
-    private List<ValidationError> errors;
 
+    private List<ValidationError> errors;
     private OffsetDateTime timestamp;
+
+    @JsonIgnore
+    private T data;
+    @JsonAnyGetter
+    public Map<String, Object> flatten() {
+        if (data == null || data instanceof Iterable || data.getClass().isArray()) {
+            return new HashMap<>();
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        return mapper.convertValue(data, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+    }
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()

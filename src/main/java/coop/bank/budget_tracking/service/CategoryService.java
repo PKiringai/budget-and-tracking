@@ -46,6 +46,8 @@ public class CategoryService {
                 ))
                 .collect(Collectors.toList());
     }
+
+
 //    public List<String> getAllCategories() {
 ////        log.info("Fetching all distinct categories from transactions");
 ////        return transactionRepository.findAllDistinctCategories();

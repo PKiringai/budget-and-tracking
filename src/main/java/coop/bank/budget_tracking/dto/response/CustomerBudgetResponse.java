@@ -12,12 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 public class CustomerBudgetResponse {
-    // Status fields
-    private String statusCode;
-    private String statusDescription;
-    private String messageCode;
-    private String messageDescription;
-    private String messageId;
 
     // Budget / account fields
     private String accountNumber;

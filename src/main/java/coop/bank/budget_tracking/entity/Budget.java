@@ -1,10 +1,7 @@
 package coop.bank.budget_tracking.entity;
 
-
-import coop.bank.budget_tracking.enums.PeriodType;
+import coop.bank.budget_tracking.enums.PeriodUnit;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -17,19 +14,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 
-/**
- * Budget Entity - Customer budget allocations by category
- *
- * Represents a budget set by a customer for a specific spending category
- * over a defined time period
- */
 @Entity
-@Table(name = "budgets", schema = "public", indexes = {
-        @Index(name = "idx_budget_cif_category", columnList = "cif_id, category"),
-        @Index(name = "idx_budget_active_dates",
-                columnList = "is_active, start_date, end_date")
-})
+@Table(name = "budgets", schema = "public")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
@@ -44,49 +32,36 @@ public class Budget {
     private Long id;
 
     @Column(name = "budget_code", nullable = false, length = 100, unique = true)
-    private String budgetCode;
+    private String budgetCode; // e.g., same as frontend messageId
 
-    @Column(name = "cif_id", nullable = false, length = 100)
+    @Column(name = "userId", nullable = false, length = 100)
     @NotBlank(message = "Customer ID is required")
-    private String cifId;
-
-    @Column(name = "category", nullable = false, length = 100)
-    @NotBlank(message = "Category is required")
-    private String category; // e.g., "Food, drinks", "Transport"
+    private String userId;
 
     @Column(name = "budget_amount", nullable = false, precision = 15, scale = 2)
-    @NotNull(message = "Budget amount is required")
-    @DecimalMin(value = "0.01", message = "Budget amount must be greater than 0")
+    @NotNull(message = "Total budget amount is required")
     private BigDecimal budgetAmount;
 
-    @Column(name = "period_type", nullable = false, length = 20)
+    @Column(name = "currency", nullable = false, length = 10)
+    @NotBlank(message = "Currency is required")
+    private String currency;
+
+    @Column(name = "period")
+    private Integer period; // optional
+
+    @Column(name = "period_unit", length = 20)
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "Period type is required")
-    private PeriodType periodType;
-
-    @Column(name = "start_date", nullable = false)
-    @NotNull(message = "Start date is required")
-    private LocalDate startDate;
-
-    @Column(name = "end_date", nullable = false)
-    @NotNull(message = "End date is required")
-    private LocalDate endDate;
+    private PeriodUnit periodUnit; // optional MONTHS, WEEKS, DAYS
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
 
-    @Column(name = "alert_threshold_80", nullable = false)
-    @Builder.Default
-    private Boolean alertThreshold80 = true;
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
 
-    @Column(name = "alert_threshold_100", nullable = false)
-    @Builder.Default
-    private Boolean alertThreshold100 = true;
-
-    @Column(name = "rollover_enabled")
-    @Builder.Default
-    private Boolean rolloverEnabled = false;
+    @Column(name = "end_date", nullable = false)
+    private LocalDate endDate;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -104,28 +79,18 @@ public class Budget {
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
 
+    // Relationship to BudgetItems
+    @OneToMany(mappedBy = "budget", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BudgetItems> items;
+
     @PrePersist
     protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = OffsetDateTime.now();
-        }
-        if (updatedAt == null) {
-            updatedAt = OffsetDateTime.now();
-        }
+        if (createdAt == null) createdAt = OffsetDateTime.now();
+        if (updatedAt == null) updatedAt = OffsetDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = OffsetDateTime.now();
-    }
-
-    // Business validation
-
-    @AssertTrue(message = "End date must be after start date")
-    public boolean isValidDateRange() {
-        if (endDate == null || startDate == null) {
-            return true; // Will be caught by @NotNull
-        }
-        return endDate.isAfter(startDate) || endDate.isEqual(startDate);
     }
 }
